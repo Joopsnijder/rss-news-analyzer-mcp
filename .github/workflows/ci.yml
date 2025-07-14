@@ -1,0 +1,137 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  release:
+    types: [ published ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.13"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras --dev
+
+    - name: Run ruff linting
+      run: |
+        uv run ruff check .
+
+    - name: Run ruff formatting check
+      run: |
+        uv run ruff format --check .
+
+    - name: Run flake8 linting
+      run: |
+        uv run flake8 --max-line-length=88 --extend-ignore=E203,W503 src/ tests/
+
+    - name: Run tests
+      run: |
+        uv run pytest tests/ -v --tb=short
+
+    - name: Test MCP server startup
+      run: |
+        # Test that the server can start without errors
+        timeout 10s uv run server.py || [ $? -eq 124 ]
+
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.13
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras --dev
+
+    - name: Run security check with bandit
+      run: |
+        uv run pip install bandit[toml]
+        uv run bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-report
+        path: bandit-report.json
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.event_name == 'release'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.13
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras --dev
+
+    - name: Build package
+      run: |
+        uv build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: always()
+
+    steps:
+    - name: Check test results
+      run: |
+        if [ "${{ needs.test.result }}" != "success" ]; then
+          echo "Tests failed"
+          exit 1
+        fi
+
+    - name: Check security results
+      run: |
+        if [ "${{ needs.security.result }}" != "success" ]; then
+          echo "Security check failed"
+          exit 1
+        fi
+
+    - name: Quality gate passed
+      run: |
+        echo "All quality checks passed! 🎉"
