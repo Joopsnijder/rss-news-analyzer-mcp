@@ -1,0 +1,33 @@
+{
+  "feeds": [
+    {
+      "id": "google_alerts_ai",
+      "name": "Google Alerts - AI",
+      "url": "https://www.google.com/alerts/feeds/01516800834195557068/15279974359414489902",
+      "type": "google_alerts",
+      "keywords": ["AI", "artificial intelligence", "machine learning", "agentic AI", "agentic", "ai agents"],
+      "update_frequency": "1h",
+      "enabled": true,
+      "analysis_settings": {
+        "track_sentiment": true,
+        "extract_companies": true,
+        "detect_trends": true
+      }
+    },
+    {
+      "id": "tech_news_sample",
+      "name": "Example Tech News Feed",
+      "url": "https://feeds.feedburner.com/oreilly/radar",
+      "type": "standard_rss",
+      "keywords": ["technology", "programming", "software", "data science", "ai", "machine learning"],
+      "update_frequency": "6h",
+      "enabled": false,
+      "analysis_settings": {
+        "track_sentiment": false,
+        "extract_companies": true,
+        "detect_trends": true
+      }
+    }
+  ],
+  "last_updated": "2024-01-01T00:00:00"
+}
