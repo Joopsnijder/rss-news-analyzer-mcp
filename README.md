@@ -15,9 +15,11 @@ A Model Context Protocol (MCP) server for RSS news analysis and trend detection.
 
 ## Installation
 
+### For Development
+
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/Joopsnijder/rss-news-analyzer-mcp.git
 cd rss-news-analyzer-mcp
 ```
 
@@ -29,6 +31,54 @@ uv sync
 3. Configure RSS feeds by editing `rss_feeds_config.json`
 
 4. Optional: Set up environment variables by copying `.env.example` to `.env`
+
+### For Claude Desktop
+
+To use this MCP server with Claude Desktop, add the following configuration to your Claude Desktop config file:
+
+**Location of config file:**
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+
+**Configuration:**
+```json
+{
+  "mcpServers": {
+    "RSS News Analyzer": {
+      "command": "/Users/yourusername/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/path/to/rss-news-analyzer-mcp",
+        "run",
+        "--with",
+        "mcp[cli]",
+        "mcp",
+        "run",
+        "/path/to/rss-news-analyzer-mcp/server.py"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "your-openai-api-key-here",
+        "OPENAI_ORGANIZATION_ID": "your-openai-org-id-here"
+      }
+    }
+  }
+}
+```
+
+**Important:**
+- Replace `/Users/yourusername/.local/bin/uv` with your actual uv installation path
+- Replace `/path/to/rss-news-analyzer-mcp` with the actual path to your cloned repository
+- Add your OpenAI API credentials to the `env` section if you want advanced analysis features
+
+**To find your uv path:**
+```bash
+which uv
+```
+
+After adding this configuration:
+1. Restart Claude Desktop
+2. The RSS News Analyzer tools will be available in your Claude Desktop conversations
+3. You can start using tools like `get_rss_feeds()`, `analyze_news_trends()`, etc.
 
 ## Configuration
 
